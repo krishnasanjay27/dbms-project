@@ -1,14 +1,77 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+model Connects_with {
+  User_ID     Int
+  Donor_ID    Int
+  blood_group String @db.VarChar(10)
+  User        User   @relation(fields: [User_ID], references: [User_ID], onDelete: Cascade, map: "Connects_with_ibfk_1")
+  Donor       Donor  @relation(fields: [Donor_ID], references: [Donor_ID], onDelete: Cascade, map: "Connects_with_ibfk_2")
+
+  @@id([User_ID, Donor_ID])
+  @@index([Donor_ID], map: "Donor_ID")
+}
+
+model Donor {
+  Donor_ID      Int             @id @default(autoincrement())
+  Donor_name    String          @db.VarChar(100)
+  Location      String          @db.VarChar(100)
+  Connects_with Connects_with[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model Medicine {
+  Medicine_ID    Int              @id @default(autoincrement())
+  Medicine_name  String           @db.VarChar(100)
+  Price          Decimal          @db.Decimal(10, 2)
+  Search_history Search_history[]
+  stocks         stocks[]
+}
+
+model Pharmacy {
+  Pharmacy_ID     Int      @id @default(autoincrement())
+  Operating_hours String   @db.VarChar(50)
+  Contact         String?  @db.VarChar(20)
+  Pharmacy_name   String   @db.VarChar(100)
+  Location        String   @db.VarChar(100)
+  stocks          stocks[]
+}
+
+model Search_history {
+  Search_ID   Int      @id @default(autoincrement())
+  Search_time DateTime @db.DateTime(0)
+  User_ID     Int
+  Medicine_ID Int
+  User        User     @relation(fields: [User_ID], references: [User_ID], onDelete: Cascade, map: "Search_history_ibfk_1")
+  Medicine    Medicine @relation(fields: [Medicine_ID], references: [Medicine_ID], onDelete: Cascade, map: "Search_history_ibfk_2")
+
+  @@index([Medicine_ID], map: "Medicine_ID")
+  @@index([User_ID], map: "User_ID")
+}
+
+model User {
+  User_ID        Int              @id @default(autoincrement())
+  User_name      String           @db.VarChar(100)
+  Contact        String?          @db.VarChar(20)
+  Location       String           @db.VarChar(100)
+  Connects_with  Connects_with[]
+  Search_history Search_history[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model stocks {
+  Pharmacy_ID Int
+  Medicine_ID Int
+  quantity    Int
+  Pharmacy    Pharmacy @relation(fields: [Pharmacy_ID], references: [Pharmacy_ID], onDelete: Cascade, map: "stocks_ibfk_1")
+  Medicine    Medicine @relation(fields: [Medicine_ID], references: [Medicine_ID], onDelete: Cascade, map: "stocks_ibfk_2")
+
+  @@id([Pharmacy_ID, Medicine_ID])
+  @@index([Medicine_ID], map: "Medicine_ID")
 }
