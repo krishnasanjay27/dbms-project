@@ -26,12 +26,14 @@ model Donor {
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model Medicine {
+model medicine {
   Medicine_ID    Int              @id @default(autoincrement())
   Medicine_name  String           @db.VarChar(100)
   Price          Decimal          @db.Decimal(10, 2)
   Search_history Search_history[]
   stocks         stocks[]
+
+  @@map("Medicine")
 }
 
 model Pharmacy {
@@ -41,18 +43,6 @@ model Pharmacy {
   Pharmacy_name   String   @db.VarChar(100)
   Location        String   @db.VarChar(100)
   stocks          stocks[]
-}
-
-model Search_history {
-  Search_ID   Int      @id @default(autoincrement())
-  Search_time DateTime @db.DateTime(0)
-  User_ID     Int
-  Medicine_ID Int
-  User        User     @relation(fields: [User_ID], references: [User_ID], onDelete: Cascade, map: "Search_history_ibfk_1")
-  Medicine    Medicine @relation(fields: [Medicine_ID], references: [Medicine_ID], onDelete: Cascade, map: "Search_history_ibfk_2")
-
-  @@index([Medicine_ID], map: "Medicine_ID")
-  @@index([User_ID], map: "User_ID")
 }
 
 model User {
@@ -70,8 +60,20 @@ model stocks {
   Medicine_ID Int
   quantity    Int
   Pharmacy    Pharmacy @relation(fields: [Pharmacy_ID], references: [Pharmacy_ID], onDelete: Cascade, map: "stocks_ibfk_1")
-  Medicine    Medicine @relation(fields: [Medicine_ID], references: [Medicine_ID], onDelete: Cascade, map: "stocks_ibfk_2")
+  Medicine    medicine @relation(fields: [Medicine_ID], references: [Medicine_ID], onDelete: Cascade, map: "stocks_ibfk_2")
 
   @@id([Pharmacy_ID, Medicine_ID])
   @@index([Medicine_ID], map: "Medicine_ID")
+}
+
+model Search_history {
+  Search_ID   Int      @id @default(autoincrement())
+  Search_time DateTime @db.DateTime(0)
+  User_ID     Int
+  Medicine_ID Int
+  User        User     @relation(fields: [User_ID], references: [User_ID], onDelete: Cascade, map: "Search_history_ibfk_1")
+  Medicine    medicine @relation(fields: [Medicine_ID], references: [Medicine_ID], onDelete: Cascade, map: "Search_history_ibfk_2")
+
+  @@index([Medicine_ID], map: "Medicine_ID")
+  @@index([User_ID], map: "User_ID")
 }
