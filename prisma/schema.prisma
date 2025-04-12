@@ -7,73 +7,53 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Connects_with {
-  User_ID     Int
-  Donor_ID    Int
-  blood_group String @db.VarChar(10)
-  User        User   @relation(fields: [User_ID], references: [User_ID], onDelete: Cascade, map: "Connects_with_ibfk_1")
-  Donor       Donor  @relation(fields: [Donor_ID], references: [Donor_ID], onDelete: Cascade, map: "Connects_with_ibfk_2")
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
 
-  @@id([User_ID, Donor_ID])
-  @@index([Donor_ID], map: "Donor_ID")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
 }
 
-model Donor {
-  Donor_ID      Int             @id @default(autoincrement())
-  Donor_name    String          @db.VarChar(100)
-  Location      String          @db.VarChar(100)
-  Connects_with Connects_with[]
-}
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model medicine {
-  Medicine_ID    Int              @id @default(autoincrement())
-  Medicine_name  String           @db.VarChar(100)
-  Price          Decimal          @db.Decimal(10, 2)
-  Search_history Search_history[]
-  stocks         stocks[]
-
-  @@map("Medicine")
-}
-
-model Pharmacy {
-  Pharmacy_ID     Int      @id @default(autoincrement())
-  Operating_hours String   @db.VarChar(50)
-  Contact         String?  @db.VarChar(20)
-  Pharmacy_name   String   @db.VarChar(100)
-  Location        String   @db.VarChar(100)
-  stocks          stocks[]
+  @@map("sessions")
 }
 
 model User {
-  User_ID        Int              @id @default(autoincrement())
-  User_name      String           @db.VarChar(100)
-  Contact        String?          @db.VarChar(20)
-  Location       String           @db.VarChar(100)
-  Connects_with  Connects_with[]
-  Search_history Search_history[]
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+
+  @@map("users")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model stocks {
-  Pharmacy_ID Int
-  Medicine_ID Int
-  quantity    Int
-  Pharmacy    Pharmacy @relation(fields: [Pharmacy_ID], references: [Pharmacy_ID], onDelete: Cascade, map: "stocks_ibfk_1")
-  Medicine    medicine @relation(fields: [Medicine_ID], references: [Medicine_ID], onDelete: Cascade, map: "stocks_ibfk_2")
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
 
-  @@id([Pharmacy_ID, Medicine_ID])
-  @@index([Medicine_ID], map: "Medicine_ID")
-}
-
-model Search_history {
-  Search_ID   Int      @id @default(autoincrement())
-  Search_time DateTime @db.DateTime(0)
-  User_ID     Int
-  Medicine_ID Int
-  User        User     @relation(fields: [User_ID], references: [User_ID], onDelete: Cascade, map: "Search_history_ibfk_1")
-  Medicine    medicine @relation(fields: [Medicine_ID], references: [Medicine_ID], onDelete: Cascade, map: "Search_history_ibfk_2")
-
-  @@index([Medicine_ID], map: "Medicine_ID")
-  @@index([User_ID], map: "User_ID")
+  @@unique([identifier, token])
+  @@map("verification_tokens")
 }
