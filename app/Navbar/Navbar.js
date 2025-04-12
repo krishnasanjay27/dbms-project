@@ -4,8 +4,13 @@ import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
+import { useSession } from "next-auth/react";
+import { Button } from "@/components/ui/button";
 
 export default function Navbar() {
+
+  const { session ,status } = useSession();
+
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
 
@@ -38,8 +43,21 @@ export default function Navbar() {
             <Link key={item.path} href={item.path} className={linkStyle(item.path)}>
               {item.name}
             </Link>
+
           ))}
         </div>
+        <div>
+        {status === "unauthenticated" ? (
+              <Button asChild variant="outline" className="border-black">
+                <Link href="/api/auth/signin">Login</Link>
+              </Button>
+            ) : (
+              <Button asChild variant="outline" className="border-black">
+                <Link href="/api/auth/signout">Sign Out</Link>
+              </Button>
+            )}
+        </div>
+        
 
         {/* Mobile Toggle Button */}
         <button
