@@ -16,7 +16,8 @@ export default function SearchBox({ onSelect }) {
       try {
         const res = await fetch(`/api/search?query=${query}`);
         const data = await res.json();
-        setSuggestions(data.results.map(r => r.name));
+        setSuggestions(data.results?.map(r => r.name) || []);
+
         setShowDropdown(true);
       } catch (err) {
         console.error('Error fetching suggestions:', err);
@@ -36,13 +37,11 @@ export default function SearchBox({ onSelect }) {
           const value = e.target.value;
           setQuery(value);
           if (value.trim() === '') {
-            onSelect(null); // 👈 Let parent know input is cleared
+            onSelect(null);
           } else {
-            onSelect(value); // Send value to parent
+            onSelect(value);
           }
         }}
-        
-        
         onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
         onFocus={() => {
           if (suggestions.length > 0) setShowDropdown(true);
@@ -55,18 +54,17 @@ export default function SearchBox({ onSelect }) {
         <ul className="absolute bg-white border border-gray-200 rounded-md w-full shadow-md z-10 mt-1">
           {suggestions.map((name, idx) => (
             <li
-            key={idx}
-            className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-            onMouseDown={(e) => e.preventDefault()} // 👈 Prevent blur before click
-            onClick={() => {
-              setQuery(name);
-              setShowDropdown(false);
-              onSelect(name);
-            }}
-          >
-            {name}
-          </li>
-          
+              key={idx}
+              className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                setQuery(name);
+                setShowDropdown(false);
+                onSelect(name);
+              }}
+            >
+              {name}
+            </li>
           ))}
         </ul>
       )}

@@ -13,16 +13,13 @@ export default function SearchPage() {
   const [searchedOnce, setSearchedOnce] = useState(false);
   const [pharmacyList, setPharmacyList] = useState([]);
 
-  // 🔍 Search for medicines
   const handleSearch = async () => {
     setLoading(true);
     setSearchedOnce(true);
     try {
       const res = await fetch(`/api/search?query=${encodeURIComponent(query.trim())}`);
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.error || 'Something went wrong');
-
       setResults(data.results);
       setError('');
     } catch (err) {
@@ -34,10 +31,9 @@ export default function SearchPage() {
     }
   };
 
-  // 🏥 Fetch pharmacies with this medicine
   const fetchPharmacies = async (medicineName) => {
     try {
-      const res = await fetch(`/api/search/medicine-pharmacies?medicine=${encodeURIComponent(medicineName)}`);
+      const res = await fetch(`/api/medicine-pharmacies?medicine=${encodeURIComponent(medicineName)}`);
       const data = await res.json();
       setPharmacyList(data.pharmacies || []);
     } catch (err) {
@@ -65,12 +61,9 @@ export default function SearchPage() {
         💊 Find Your Medicine
       </motion.h1>
 
-      {/* 🔍 Search box */}
       <SearchBox onSelect={(value) => setQuery(value?.trim() || '')} />
 
-      {loading && (
-        <div className="mt-4 text-green-600">Searching...</div>
-      )}
+      {loading && <div className="mt-4 text-green-600">Searching...</div>}
 
       {error && (
         <motion.p className="text-red-500 mt-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -78,7 +71,6 @@ export default function SearchPage() {
         </motion.p>
       )}
 
-      {/* 💊 Medicine search results */}
       {results.length > 0 && (
         <motion.ul
           className="mt-6 space-y-4 w-full max-w-md"
@@ -94,14 +86,12 @@ export default function SearchPage() {
               onClick={() => fetchPharmacies(item.name)}
             >
               <p className="text-lg font-semibold text-green-800">🧪 {item.name}</p>
-              <p className="text-gray-700">💰 Price: {item.price}</p>
-              <p className="text-gray-700">📦 Total Stock: {item.stock}</p>
+              <p className="text-gray-700">💰 Price: ₹{item.price}</p>
             </motion.li>
           ))}
         </motion.ul>
       )}
 
-      {/* ℹ️ No results message */}
       {results.length === 0 && !error && !loading && !query && searchedOnce && (
         <motion.div
           className="mt-12 text-center text-gray-500"
@@ -115,7 +105,6 @@ export default function SearchPage() {
         </motion.div>
       )}
 
-      {/* 🏥 Pharmacy availability list */}
       {pharmacyList.length > 0 && (
         <div className="mt-10 w-full max-w-md">
           <h3 className="text-lg font-semibold mb-2 text-green-700">Pharmacies with this medicine:</h3>
