@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
@@ -16,22 +15,21 @@ export async function GET(request) {
     } else {
       medicines = await prisma.medicine.findMany({
         where: {
-          Medicine_name: {
+          medicine_name: {
             startsWith: query,
-          },
+          }
+          ,
         },
       });
     }
 
     const results = medicines.slice(0, 10).map((med) => ({
-      name: med.Medicine_name,
-      price: med.Price,
-      stock: med.Stock,
-      id: med.Medicine_ID,
-      availability: med.Availability || [],
+      name: med.medicine_name,
+      price: med.price,
+      id: med.Medicine_id,
     }));
 
-    return NextResponse.json({ results });
+    return NextResponse.json({ results: results || [] });
 
   } catch (error) {
     console.error('Search error:', error);

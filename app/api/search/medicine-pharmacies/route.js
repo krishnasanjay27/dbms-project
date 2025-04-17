@@ -6,38 +6,41 @@ const prisma = new PrismaClient();
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const name = searchParams.get('medicine');
+    const name     = searchParams.get('medicine');
+    const minStock = parseInt(searchParams.get('minStock')) || 0;
+    const maxPrice = parseInt(searchParams.get('maxPrice')) || Number.MAX_SAFE_INTEGER;
 
     if (!name) {
       return NextResponse.json({ error: 'No medicine name provided' }, { status: 400 });
     }
 
-    const medicine = await prisma.medicine.findFirst({
-      where: { Medicine_name: name },
-      select: { Medicine_ID: true }
-    });
+    // call your stored procedure
+    const raw = await prisma.$queryRawUnsafe(
+      `CALL GetPharmaciesByMedicineAndFilters(?, ?, ?, ?)`,
+      name,
+      minStock,
+      0,        // minPrice
+      maxPrice
+    );
 
-    if (!medicine) {
-      return NextResponse.json({ error: 'Medicine not found' }, { status: 404 });
-    }
+    console.log('Stored Procedure raw result:', JSON.stringify(raw));
 
-    const stocks = await prisma.stocks.findMany({
-      where: { Medicine_ID: medicine.Medicine_ID },
-      include: {
-        Pharmacy: true
-      }
-    });
+    //   raw might be:
+    //   • [[{f0:…,f1:…,…},…], …]  OR
+    //   • [{f0:…,f1:…,…},…]
+    const rows = Array.isArray(raw[0]) ? raw[0] : raw;
 
-    const pharmacies = stocks.map(s => ({
-      pharmacy: s.Pharmacy.Pharmacy_name,
-      location: s.Pharmacy.Location,
-      contact: s.Pharmacy.Contact,
-      quantity: s.quantity,
+    const pharmacies = rows.map((r) => ({
+      pharmacy:      r.f0,
+      location:      r.f1,
+      contact:       r.f2,
+      quantity:      r.f3,
+      selling_price: r.f4,
     }));
 
     return NextResponse.json({ pharmacies });
-  } catch (error) {
-    console.error('API error:', error);
+  } catch (err) {
+    console.error('Stored Procedure API error:', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

@@ -1,131 +1,161 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Search } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Funnel } from 'lucide-react';
 import SearchBox from './SearchBox';
 
 export default function SearchPage() {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState([]);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [searchedOnce, setSearchedOnce] = useState(false);
+  const [selectedMed, setSelectedMed] = useState(null);
   const [pharmacyList, setPharmacyList] = useState([]);
+  const [filters, setFilters] = useState({ minQuantity: 0, maxPrice: 500 });
+  const [showFilters, setShowFilters] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  // 🔍 Search for medicines
-  const handleSearch = async () => {
+  // unified fetch function
+  const fetchPharmacies = useCallback(async (medName, { minQuantity, maxPrice }) => {
     setLoading(true);
-    setSearchedOnce(true);
+    setError('');
     try {
-      const res = await fetch(`/api/search?query=${encodeURIComponent(query.trim())}`);
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error || 'Something went wrong');
-
-      setResults(data.results);
-      setError('');
+      const params = new URLSearchParams({
+        medicine:  medName,
+        minStock:  String(minQuantity),
+        maxPrice:  String(maxPrice),
+      });
+      const res = await fetch(`/api/search/medicine-pharmacies?${params}`);
+      if (!res.ok) throw new Error('Fetch error');
+      const { pharmacies } = await res.json();
+      setPharmacyList(pharmacies || []);
     } catch (err) {
-      console.error('Error:', err);
-      setError('⚠️ ' + (err.message || 'Something went wrong. Please try again.'));
-      setResults([]);
+      console.error(err);
+      setError('Could not load pharmacies');
+      setPharmacyList([]);
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // when you select a medicine
+  const onSelectMedicine = (med) => {
+    setSelectedMed(med);
+    // auto‐fetch with current filter defaults
+    fetchPharmacies(med.name, filters);
   };
 
-  // 🏥 Fetch pharmacies with this medicine
-  const fetchPharmacies = async (medicineName) => {
-    try {
-      const res = await fetch(`/api/search/medicine-pharmacies?medicine=${encodeURIComponent(medicineName)}`);
-      const data = await res.json();
-      setPharmacyList(data.pharmacies || []);
-    } catch (err) {
-      console.error('Error fetching pharmacies:', err);
-    }
+  // when you click Apply Filters
+  const onApplyFilters = () => {
+    if (!selectedMed) return;
+    fetchPharmacies(selectedMed.name, filters);
+    setShowFilters(false);
   };
-
-  useEffect(() => {
-    if (!query.trim()) {
-      setResults([]);
-      setPharmacyList([]);
-      return;
-    }
-    handleSearch();
-  }, [query]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-green-50 to-white">
+    <div className="min-h-screen bg-green-50 p-8 flex flex-col items-center">
       <motion.h1
-        className="text-4xl font-bold text-green-700 mb-6"
-        initial={{ opacity: 0, y: -20 }}
+        className="text-5xl font-bold text-green-800 mb-8"
+        initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        💊 Find Your Medicine
-      </motion.h1>
+      >💊 Find Your Medicine</motion.h1>
 
-      {/* 🔍 Search box */}
-      <SearchBox onSelect={(value) => setQuery(value?.trim() || '')} />
+      {/* 1) Search box */}
+      <div className="w-full max-w-2xl mb-6">
+        <SearchBox onSelect={onSelectMedicine} />
+      </div>
 
-      {loading && (
-        <div className="mt-4 text-green-600">Searching...</div>
+      {/* 2) Medicine card + filter toggle */}
+      {selectedMed && (
+        <div className="w-full max-w-2xl flex items-start mb-4 space-x-4">
+          {/* medicine info */}
+          <div className="flex-1 bg-white p-4 rounded-xl shadow">
+            <p className="font-semibold text-lg">{selectedMed.name}</p>
+            <p className="text-green-700">₹{selectedMed.price}</p>
+          </div>
+
+          {/* funnel button */}
+          <button
+            onClick={() => setShowFilters(f => !f)}
+            className="p-3 bg-white rounded-lg shadow hover:bg-gray-100 transition self-center"
+          >
+            <Funnel className={`h-6 w-6 ${showFilters ? 'text-blue-600' : 'text-gray-600'}`} />
+          </button>
+        </div>
       )}
 
-      {error && (
-        <motion.p className="text-red-500 mt-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          {error}
-        </motion.p>
-      )}
-
-      {/* 💊 Medicine search results */}
-      {results.length > 0 && (
-        <motion.ul
-          className="mt-6 space-y-4 w-full max-w-md"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          {results.map((item, idx) => (
-            <motion.li
-              key={idx}
-              className="border p-4 rounded-xl shadow hover:shadow-lg transition bg-white cursor-pointer"
-              whileHover={{ y: -3 }}
-              onClick={() => fetchPharmacies(item.name)}
+      {/* 3) Filter panel */}
+      <AnimatePresence>
+        {showFilters && selectedMed && (
+          <motion.div
+            className="w-full max-w-2xl bg-white p-6 rounded-xl shadow mb-6"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* min stock */}
+              <div>
+                <label className="block mb-2 text-gray-700">
+                  Min Stock: <span className="text-green-800">{filters.minQuantity}</span>
+                </label>
+                <input
+                  type="range" min="0" max="100"
+                  value={filters.minQuantity}
+                  onChange={e => setFilters(f => ({ ...f, minQuantity: +e.target.value }))}
+                  className="w-full"
+                />
+              </div>
+              {/* max price */}
+              <div>
+                <label className="block mb-2 text-gray-700">
+                  Max Price: <span className="text-green-800">₹{filters.maxPrice}</span>
+                </label>
+                <input
+                  type="range" min="0" max="1000" step="10"
+                  value={filters.maxPrice}
+                  onChange={e => setFilters(f => ({ ...f, maxPrice: +e.target.value }))}
+                  className="w-full"
+                />
+              </div>
+            </div>
+            <button
+              onClick={onApplyFilters}
+              className="mt-6 px-6 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition"
             >
-              <p className="text-lg font-semibold text-green-800">🧪 {item.name}</p>
-              <p className="text-gray-700">💰 Price: {item.price}</p>
-              <p className="text-gray-700">📦 Total Stock: {item.stock}</p>
-            </motion.li>
+              Apply Filters
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 4) Loading skeleton */}
+      {loading && (
+        <div className="w-full max-w-md space-y-4 mb-6">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="animate-pulse bg-white p-4 rounded-xl shadow">
+              <div className="h-4 bg-gray-200 mb-2 rounded"></div>
+              <div className="h-3 bg-gray-200 mb-2 rounded w-3/4"></div>
+              <div className="h-3 bg-gray-200 w-1/2 rounded"></div>
+            </div>
           ))}
-        </motion.ul>
+        </div>
       )}
 
-      {/* ℹ️ No results message */}
-      {results.length === 0 && !error && !loading && !query && searchedOnce && (
-        <motion.div
-          className="mt-12 text-center text-gray-500"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          <p>Enter a medicine name to search</p>
-          <p className="text-sm mt-2">Try searching for "paracetamol" or "aspirin"</p>
-          <p className="text-sm mt-1">Or click the search button with empty query to see all medicines</p>
-        </motion.div>
-      )}
+      {error && <p className="text-red-500 mb-4">{error}</p>}
 
-      {/* 🏥 Pharmacy availability list */}
+      {/* 5) Pharmacy results */}
       {pharmacyList.length > 0 && (
-        <div className="mt-10 w-full max-w-md">
-          <h3 className="text-lg font-semibold mb-2 text-green-700">Pharmacies with this medicine:</h3>
-          <ul className="space-y-3">
-            {pharmacyList.map((pharm, idx) => (
-              <li key={idx} className="p-3 bg-white shadow rounded-lg">
-                <p className="font-medium text-green-800">🏥 {pharm.pharmacy}</p>
-                <p className="text-sm text-gray-700">📍 {pharm.location}</p>
-                <p className="text-sm text-gray-700">📞 {pharm.contact || 'N/A'}</p>
-                <p className="text-sm text-gray-700">📦 Stock: {pharm.quantity} units</p>
+        <div className="w-full max-w-2xl">
+          <h2 className="text-2xl font-semibold text-green-800 mb-4">Pharmacies</h2>
+          <ul className="space-y-4">
+            {pharmacyList.map((p, i) => (
+              <li key={i} className="bg-white p-4 rounded-xl shadow">
+                <p className="font-medium">🏥 {p.pharmacy}</p>
+                <p className="text-sm text-gray-600">📍 {p.location}</p>
+                <p className="text-sm text-gray-600">📞 {p.contact}</p>
+                <div className="mt-2 flex justify-between text-sm">
+                  <span>📦 {p.quantity} units</span>
+                  <span>₹{p.selling_price}</span>
+                </div>
               </li>
             ))}
           </ul>

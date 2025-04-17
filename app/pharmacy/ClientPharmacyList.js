@@ -28,7 +28,7 @@ const ClientPharmacyList = ({ pharmacies }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
         {pharmacies.map((pharmacy, index) => (
           <motion.div
-            key={pharmacy.Pharmacy_ID}
+            key={index}
             className="bg-white border border-purple-200 p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -36,17 +36,17 @@ const ClientPharmacyList = ({ pharmacies }) => {
           >
             <div className="flex items-center gap-2 mb-3 text-purple-700">
               <MapPin size={22} />
-              <h3 className="text-xl font-bold">{pharmacy.Pharmacy_name}</h3>
+              <h3 className="text-xl font-bold">{pharmacy.pharmacy_name }</h3>
             </div>
             <p className="text-gray-700 mb-1">
-              📍 <strong>Location:</strong> {pharmacy.Location}
+              📍 <strong>Location:</strong> {pharmacy.pharmacy_location}
             </p>
             <p className="text-gray-700 mb-1">
-              📞 <strong>Contact:</strong> {pharmacy.Contact || "N/A"}
+              📞 <strong>Contact:</strong> {pharmacy.pharmacy_contact || "N/A"}
             </p>
             <p className="text-gray-700 mb-1">
-              ⏰ <strong>Hours:</strong> {pharmacy.Operating_hours}
-            </p>
+              ⏰ <strong>Hours:</strong> {pharmacy.operating_hours}
+            </p>\
             <div className="mt-4 text-sm text-purple-500 italic">
               Stock status and directions coming soon!
             </div>
