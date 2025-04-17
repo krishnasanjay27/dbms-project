@@ -6,43 +6,41 @@ const prisma = new PrismaClient();
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const name = searchParams.get('medicine');
+    const name     = searchParams.get('medicine');
+    const minStock = parseInt(searchParams.get('minStock')) || 0;
+    const maxPrice = parseInt(searchParams.get('maxPrice')) || Number.MAX_SAFE_INTEGER;
 
     if (!name) {
       return NextResponse.json({ error: 'No medicine name provided' }, { status: 400 });
     }
 
-    // Fetch the medicine ID
-    const medicine = await prisma.medicine.findFirst({
-      where: { medicine_name: name },
-      select: { Medicine_id: true }
-    });
+    // call your stored procedure
+    const raw = await prisma.$queryRawUnsafe(
+      `CALL GetPharmaciesByMedicineAndFilters(?, ?, ?, ?)`,
+      name,
+      minStock,
+      0,        // minPrice
+      maxPrice
+    );
 
-    if (!medicine) {
-      return NextResponse.json({ error: 'Medicine not found' }, { status: 404 });
-    }
+    console.log('Stored Procedure raw result:', JSON.stringify(raw));
 
-    // Fetch all pharmacy stock entries for this medicine
-    const stocks = await prisma.pharmacyMedicineStock_.findMany({
-      where: { Medicine_id: medicine.Medicine_id },
-      include: {
-        Pharmacy: true
-      }
-    });
+    //   raw might be:
+    //   • [[{f0:…,f1:…,…},…], …]  OR
+    //   • [{f0:…,f1:…,…},…]
+    const rows = Array.isArray(raw[0]) ? raw[0] : raw;
 
-    const pharmacies = stocks.map(s => ({
-      pharmacy: s.Pharmacy.pharmacy_name,
-      location: s.Pharmacy.pharmacy_location,
-      contact: s.Pharmacy.pharmacy_contact,
-      quantity: s.stock_quantity,
-      selling_price: s.selling_price
+    const pharmacies = rows.map((r) => ({
+      pharmacy:      r.f0,
+      location:      r.f1,
+      contact:       r.f2,
+      quantity:      r.f3,
+      selling_price: r.f4,
     }));
 
-    // 👇 This is the key addition
-    return NextResponse.json({ pharmacies: pharmacies || [] });
-
-  } catch (error) {
-    console.error('API error:', error);
+    return NextResponse.json({ pharmacies });
+  } catch (err) {
+    console.error('Stored Procedure API error:', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
