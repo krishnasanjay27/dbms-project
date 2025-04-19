@@ -46,16 +46,9 @@ const ClientPharmacyList = ({ pharmacies }) => {
             </p>
             <p className="text-gray-700 mb-1">
               ⏰ <strong>Hours:</strong> {pharmacy.operating_hours}
-            </p>\
-            <div className="mt-4 text-sm text-purple-500 italic">
-              Stock status and directions coming soon!
-            </div>
+            </p>
           </motion.div>
         ))}
-      </div>
-
-      <div className="mt-12 text-center text-purple-500 text-sm">
-        🗺️ Map-based search, filters by stock, and emergency availability coming soon to enhance your experience!
       </div>
     </div>
   );

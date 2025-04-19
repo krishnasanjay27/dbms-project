@@ -34,8 +34,9 @@ export async function GET(request) {
       pharmacy:      r.f0,
       location:      r.f1,
       contact:       r.f2,
-      quantity:      r.f3,
-      selling_price: r.f4,
+      hours:         r.f3,
+      quantity:      r.f4,
+      selling_price: r.f5,
     }));
 
     return NextResponse.json({ pharmacies });

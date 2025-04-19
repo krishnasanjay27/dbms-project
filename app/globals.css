@@ -112,6 +112,7 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+
 @layer base {
   * {
     margin: 0;
@@ -123,4 +124,5 @@
     width: 100%;
     overflow-x: hidden;
   }
+  
 }
