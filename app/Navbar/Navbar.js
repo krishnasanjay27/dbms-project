@@ -38,7 +38,7 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex space-x-6">
+        <div className="hidden md:flex space-x-6 absolute right-50">
           {navItems.map((item) => (
             <Link key={item.path} href={item.path} className={linkStyle(item.path)}>
               {item.name}

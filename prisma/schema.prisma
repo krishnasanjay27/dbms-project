@@ -67,7 +67,7 @@ model Medicine {
 }
 
 model Pharmacy {
-  operating_hours        Int
+  operating_hours        String?                  @db.VarChar(50)
   pharmacy_id            Int                      @id
   pharmacy_contact       String                   @db.VarChar(15)
   pharmacy_name          String                   @db.VarChar(100)
