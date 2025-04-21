@@ -18,16 +18,40 @@ export async function GET(request) {
           medicine_name: {
             startsWith: query,
           }
-          ,
         },
       });
     }
 
-    const results = medicines.slice(0, 10).map((med) => ({
-      name: med.medicine_name,
-      price: med.price,
-      id: med.Medicine_id,
-    }));
+    // Get pharmacy stock for each medicine
+    const results = await Promise.all(
+      medicines.slice(0, 10).map(async (med) => {
+        const pharmacyStocks = await prisma.pharmacyMedicineStock_.findMany({
+          where: {
+            Medicine_id: med.Medicine_id,
+            stock_quantity: {
+              gt: 0
+            }
+          },
+          include: {
+            Pharmacy: true,
+          },
+        });
+
+        return {
+          name: med.medicine_name,
+          price: med.price,
+          id: med.Medicine_id,
+          pharmacies: pharmacyStocks.map(stock => ({
+            id: stock.pharmacy_id,
+            name: stock.Pharmacy.pharmacy_name,
+            location: stock.Pharmacy.pharmacy_location,
+            price: stock.selling_price,
+            stock: stock.stock_quantity,
+            stockId: stock.stock_id
+          }))
+        };
+      })
+    );
 
     return NextResponse.json({ results: results || [] });
 
