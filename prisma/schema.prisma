@@ -39,13 +39,14 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime? @map("email_verified")
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
+  id              String            @id @default(cuid())
+  name            String?
+  email           String?           @unique
+  emailVerified   DateTime?         @map("email_verified")
+  image           String?
+  MedicineBooking MedicineBooking[]
+  accounts        Account[]
+  sessions        Session[]
 
   @@map("users")
 }
@@ -63,6 +64,7 @@ model Medicine {
   price                  Int
   medicine_name          String                   @db.VarChar(100)
   Medicine_id            Int                      @id
+  MedicineBooking        MedicineBooking[]
   PharmacyMedicineStock_ PharmacyMedicineStock_[]
 }
 
@@ -72,6 +74,7 @@ model Pharmacy {
   pharmacy_contact       String                   @db.VarChar(15)
   pharmacy_name          String                   @db.VarChar(100)
   pharmacy_location      String                   @db.VarChar(100)
+  MedicineBooking        MedicineBooking[]
   PharmacyMedicineStock_ PharmacyMedicineStock_[]
 }
 
@@ -104,4 +107,21 @@ model blood_stock {
   blood_bank     blood_bank @relation(fields: [bank_id], references: [bank_id], onDelete: NoAction, onUpdate: NoAction, map: "blood_stock_ibfk_1")
 
   @@index([bank_id], map: "bank_id")
+}
+
+model MedicineBooking {
+  booking_id   Int       @id @default(autoincrement())
+  user_id      String
+  pharmacy_id  Int
+  medicine_id  Int
+  quantity     Int
+  booking_date DateTime? @default(now()) @db.DateTime(0)
+  status       String?   @default("pending") @db.VarChar(20)
+  users        User      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "MedicineBooking_ibfk_1")
+  Pharmacy     Pharmacy  @relation(fields: [pharmacy_id], references: [pharmacy_id], onDelete: NoAction, onUpdate: NoAction, map: "MedicineBooking_ibfk_2")
+  Medicine     Medicine  @relation(fields: [medicine_id], references: [Medicine_id], onDelete: NoAction, onUpdate: NoAction, map: "MedicineBooking_ibfk_3")
+
+  @@index([medicine_id], map: "medicine_id")
+  @@index([pharmacy_id], map: "pharmacy_id")
+  @@index([user_id], map: "user_id")
 }
