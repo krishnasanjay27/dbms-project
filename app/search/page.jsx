@@ -1,5 +1,6 @@
 'use client';
 
+import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import { Toaster, toast } from 'react-hot-toast';
@@ -96,7 +97,11 @@ export default function SearchPage() {
       <Toaster position="top-center" />
       
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Search Medicines</h1>
+      <motion.h1
+        className="text-2xl font-bold text-green-800 mb-8"
+        initial={{ opacity: 0, y: -30 }}
+        animate={{ opacity: 1, y: 0 }}
+      >💊 Find Your Medicine</motion.h1>
         
         {status === 'loading' ? (
           <div className="text-sm">Loading...</div>

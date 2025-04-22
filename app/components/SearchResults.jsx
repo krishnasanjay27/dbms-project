@@ -67,7 +67,7 @@ export default function SearchResults({ results }) {
       {results.map((medicine) => (
         <div key={medicine.id} className="bg-white rounded-lg shadow-md p-4 mb-4">
           <h3 className="text-lg font-semibold">{medicine.name}</h3>
-          <p className="text-gray-600">Base Price: ₹{medicine.price}</p>
+          
           
           {medicine.pharmacies && medicine.pharmacies.length > 0 ? (
             <div className="mt-2">

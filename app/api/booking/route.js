@@ -50,17 +50,8 @@ export async function POST(request) {
         }
       }),
       
-      // Update the stock quantity
-      prisma.pharmacyMedicineStock_.update({
-        where: {
-          stock_id: stockId
-        },
-        data: {
-          stock_quantity: {
-            decrement: quantity
-          }
-        }
-      })
+      // Stock is reduced via MySQL trigger: ReduceStockAfterBooking
+
     ]);
 
     return NextResponse.json({ 

@@ -81,7 +81,6 @@ export default function FilteredPharmacies({ medicine, pharmacies }) {
   return (
     <div className="mt-4">
       <h2 className="text-xl font-semibold mb-3">{medicine.name}</h2>
-      <p className="text-gray-600 mb-4">Base Price: ₹{medicine.price}</p>
       
       <div className="space-y-4">
         {pharmacyArray.map((pharmacy, index) => (
